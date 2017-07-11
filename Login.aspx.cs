@@ -37,8 +37,57 @@ public partial class Login : System.Web.UI.Page
         //retrieve hash from DB
         string hashFromDB = getDBHash(email);
 
+        //get attempts
+        int tries = getattempt(email);
 
+        if (tries < 3)
+        {
+            try
+            {
+                if (saltFromDB != null && hashFromDB != null && saltFromDB.Length > 0)
+                {
+                    //hashing userinput
+                    string pwdWithSalt = password + saltFromDB;
 
+                    SHA512Managed hashing = new SHA512Managed();
+                    byte[] hashwithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
+                    string finalHash = Convert.ToBase64String(hashwithSalt);
+
+                    //check userhash with dbHash
+                    if (finalHash.Equals(hashFromDB))
+                    {
+
+                        //Decryption
+                        //get Key and IV from db
+
+                        Key = Convert.FromBase64String(getDBKey(email));
+                        System.Diagnostics.Debug.WriteLine(Key);
+
+                        IV = Convert.FromBase64String(getDBIv(email));
+
+                        lbl_Error.Text = "";
+                        LabelWelcome.Text = "Welcome, " + decryptData(getDBName(email));
+                    }
+                    else
+                    {
+                        plusoneAttempt(email);
+                        lbl_Error.Text = "Email or Password is Invalid";
+                    }
+                }
+                else
+                {
+                    lbl_Error.Text = "Email or Password is Invalid";
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.ToString());
+            }
+        }
+        else
+        {
+            lbl_Error.Text = "You have 4 failed logon attempts";
+        }
        
 
 
@@ -47,46 +96,7 @@ public partial class Login : System.Web.UI.Page
 
 
 
-        try
-        {
-            if (saltFromDB != null && hashFromDB != null && saltFromDB.Length > 0)
-            {
-                //hashing userinput
-                string pwdWithSalt = password + saltFromDB;
-
-                SHA512Managed hashing = new SHA512Managed();
-                byte[] hashwithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
-                string finalHash = Convert.ToBase64String(hashwithSalt);
-
-                //check userhash with dbHash
-                if (finalHash.Equals(hashFromDB))
-                {
-
-                    //Decryption
-                    //get Key and IV from db
-
-                    Key = Convert.FromBase64String(getDBKey(email));
-                    System.Diagnostics.Debug.WriteLine(Key);
-
-                    IV = Convert.FromBase64String(getDBIv(email));
-
-                    lbl_Error.Text = "";
-                    LabelWelcome.Text = "Welcome, " + decryptData(getDBName(email));
-                }
-                else
-                {
-                    lbl_Error.Text = "Email or Password is Invalid";
-                }
-            }
-            else
-            {
-                lbl_Error.Text = "Email or Password is Invalid";
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception(ex.ToString());
-        }
+      
     }
 
 
@@ -150,6 +160,79 @@ public partial class Login : System.Web.UI.Page
         }
         return h;
     }
+    protected int getattempt(string userid)
+    {
+        int h = 0;
+        SqlConnection connection = new SqlConnection(MYDBConnectionString);
+        string sql = "select attempt FROM Account WHERE Email=@USERID";
+        SqlCommand command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@USERID", userid);
+        try
+        {
+            connection.Open();
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    if (reader["attempt"] != null)
+                    {
+                        if (reader["attempt"] != DBNull.Value)
+                        {
+                            h = int.Parse(reader["attempt"].ToString());
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.ToString());
+        }
+        finally
+        {
+            connection.Close();
+        }
+        return h;
+    }
+    protected void plusoneAttempt(string user)
+    {
+        int x = getattempt(user);
+        int z = x + 1;
+        try
+        {
+            using (SqlConnection con = new SqlConnection(MYDBConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("update  Account set attempt = @att where Email = @email"))
+                {
+                    using (SqlDataAdapter sda = new SqlDataAdapter())
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@Email", user);
+                        cmd.Parameters.AddWithValue("@att", z);
+
+                       
+
+                        cmd.Connection = con;
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        con.Close();
+                    }
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.ToString());
+        }
+    }
+    
+   
+
+
+
+
+
 
 
     protected string getDBHash(string userid)

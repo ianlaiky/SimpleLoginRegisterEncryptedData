@@ -67,7 +67,7 @@ public partial class Register : System.Web.UI.Page
         {
             using (SqlConnection con = new SqlConnection(MYDBConnectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@Email,@Name,@PasswordHash,@PasswordSalt,@DateTimeRegistered,@key,@iv)"))
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@Email,@Name,@PasswordHash,@PasswordSalt,@DateTimeRegistered,@key,@iv,@attempt)"))
                 {
                     using (SqlDataAdapter sda = new SqlDataAdapter())
                     {
@@ -79,6 +79,7 @@ public partial class Register : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@DateTimeRegistered", DateTime.Now);
                         cmd.Parameters.AddWithValue("@key", Convert.ToBase64String(Key));
                         cmd.Parameters.AddWithValue("@iv",Convert.ToBase64String(IV));
+                        cmd.Parameters.AddWithValue("@attempt", 0);
 
                         cmd.Connection = con;
                         con.Open();
