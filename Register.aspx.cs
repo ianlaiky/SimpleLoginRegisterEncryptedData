@@ -4,18 +4,17 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-
 using System.Text;
 using System.Data;
-
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 
 
 public partial class Register : System.Web.UI.Page
 {
+    string MYDBConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["MYDBConnection"]
+        .ConnectionString;
 
-    string MYDBConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["MYDBConnection"].ConnectionString;
     static string finalHash;
     static string salt;
     private static byte[] Key;
@@ -23,23 +22,19 @@ public partial class Register : System.Web.UI.Page
 
     protected void Page_Load(object sender, EventArgs e)
     {
-
     }
 
     protected void ButtonSubmit_Click(object sender, EventArgs e)
     {
-
-
         //get from form
         string email = TextBoxEmail.Text.Trim();
         string password = TextBoxPassword.Text.Trim();
         string nameMember = TextBoxNameOfMember.Text.Trim();
 
 
-
         //generate salt
         RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-        byte[]saltByte = new byte[8];
+        byte[] saltByte = new byte[8];
         //fills array of bytes 
         rng.GetBytes(saltByte);
         salt = Convert.ToBase64String(saltByte);
@@ -59,15 +54,15 @@ public partial class Register : System.Web.UI.Page
         IV = cipher.IV;
 
 
-
-
-
         //save to db
         try
         {
             using (SqlConnection con = new SqlConnection(MYDBConnectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@Email,@Name,@PasswordHash,@PasswordSalt,@DateTimeRegistered,@key,@iv,@attempt)"))
+                using (SqlCommand cmd =
+                    new SqlCommand(
+                        "INSERT INTO Account VALUES(@Email,@Name,@PasswordHash,@PasswordSalt,@DateTimeRegistered,@key,@iv,@attempt)")
+                )
                 {
                     using (SqlDataAdapter sda = new SqlDataAdapter())
                     {
@@ -78,7 +73,7 @@ public partial class Register : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@PasswordSalt", salt);
                         cmd.Parameters.AddWithValue("@DateTimeRegistered", DateTime.Now);
                         cmd.Parameters.AddWithValue("@key", Convert.ToBase64String(Key));
-                        cmd.Parameters.AddWithValue("@iv",Convert.ToBase64String(IV));
+                        cmd.Parameters.AddWithValue("@iv", Convert.ToBase64String(IV));
                         cmd.Parameters.AddWithValue("@attempt", 0);
 
                         cmd.Connection = con;
@@ -88,25 +83,18 @@ public partial class Register : System.Web.UI.Page
                     }
                 }
             }
-
         }
         catch (Exception ex)
         {
             throw new Exception(ex.ToString());
         }
-
-
-
-
-
-
     }
 
 
     protected string encryptData(string data)
     {
         //assigning Key and IV to RijndaelManaged
-       string cipherSave = null;
+        string cipherSave = null;
 
         try
         {
@@ -121,23 +109,11 @@ public partial class Register : System.Web.UI.Page
             byte[] cipherText = enCryptoTransform.TransformFinalBlock(plainText, 0, plainText.Length);
 
             cipherSave = Convert.ToBase64String(cipherText);
-
-
-
         }
         catch (Exception ex)
         {
             throw new Exception(ex.ToString());
         }
         return cipherSave;
-
     }
-
-
-
-
-
-
-
-
 }

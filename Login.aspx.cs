@@ -56,7 +56,6 @@ public partial class Login : System.Web.UI.Page
                     //check userhash with dbHash
                     if (finalHash.Equals(hashFromDB))
                     {
-
                         //Decryption
                         //get Key and IV from db
 
@@ -88,21 +87,12 @@ public partial class Login : System.Web.UI.Page
         {
             lbl_Error.Text = "You have 4 failed logon attempts";
         }
-       
-
-
-
-
-
-
-
-      
     }
 
 
     protected string decryptData(string cipherText)
     {
-        byte[] cipherTextByte =Convert.FromBase64String(cipherText);
+        byte[] cipherTextByte = Convert.FromBase64String(cipherText);
 
         try
         {
@@ -114,16 +104,11 @@ public partial class Login : System.Web.UI.Page
 
             //encode decrypted data to utf8
             return Encoding.UTF8.GetString(plainText);
-
-
         }
         catch (Exception ex)
         {
             throw new Exception(ex.ToString());
         }
-
-
-
     }
 
     protected string getDBSalt(string userid)
@@ -160,6 +145,7 @@ public partial class Login : System.Web.UI.Page
         }
         return h;
     }
+
     protected int getattempt(string userid)
     {
         int h = 0;
@@ -194,6 +180,7 @@ public partial class Login : System.Web.UI.Page
         }
         return h;
     }
+
     protected void plusoneAttempt(string user)
     {
         int x = getattempt(user);
@@ -210,7 +197,6 @@ public partial class Login : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@Email", user);
                         cmd.Parameters.AddWithValue("@att", z);
 
-                       
 
                         cmd.Connection = con;
                         con.Open();
@@ -219,20 +205,12 @@ public partial class Login : System.Web.UI.Page
                     }
                 }
             }
-
         }
         catch (Exception ex)
         {
             throw new Exception(ex.ToString());
         }
     }
-    
-   
-
-
-
-
-
 
 
     protected string getDBHash(string userid)
@@ -376,5 +354,4 @@ public partial class Login : System.Web.UI.Page
         }
         return h;
     }
-
 }
